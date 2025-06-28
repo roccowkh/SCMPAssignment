@@ -83,9 +83,7 @@ struct LoginView: View {
                         }
                     }
                     .padding(.horizontal, 30)
-                    
-                    Spacer()
-                    
+                                        
                     // Login Button
                     Button(action: {
                         viewModel.login { success in
@@ -118,10 +116,11 @@ struct LoginView: View {
                 .padding(.bottom, 40)
                 
                 // ErrorSnackBar overlay
+                
                 VStack {
                     Spacer()
                     ErrorSnackBar(message: viewModel.errorMessage ?? "", isVisible: $isErrorSnackBarVisible)
-                        .padding(.bottom, 20)
+                        .padding()
                 }
                 .animation(.easeInOut, value: isErrorSnackBarVisible)
                 
