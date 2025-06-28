@@ -11,12 +11,12 @@ import SwiftUI
 struct SCMPAssignmentApp: App {
     // Create a shared instance of MemberViewModel
     @StateObject private var memberViewModel = MemberViewModel()
-    @State private var isLoggedIn = false
+    @State private var isLoggedIn = KeychainHelper.shared.read(forKey: "userToken") != nil
     
     var body: some Scene {
         WindowGroup {
             if isLoggedIn {
-                MemberListScreen()
+                MemberListScreen(isLoggedIn: $isLoggedIn)
                     .environmentObject(memberViewModel)
             } else {
                 LoginView(isLoggedIn: $isLoggedIn)

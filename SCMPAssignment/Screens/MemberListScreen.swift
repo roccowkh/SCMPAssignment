@@ -10,10 +10,25 @@ import SwiftUI
 struct MemberListScreen: View {
     @EnvironmentObject var memberViewModel: MemberViewModel
     @State private var selectedMember: MemberDetails?
+    @Binding var isLoggedIn: Bool
+    
+    var token: String? {
+        KeychainHelper.shared.read(forKey: "userToken")
+    }
     
     var body: some View {
         NavigationStack {
             VStack {
+                // Show token at the top
+                if let token = token {
+                    Text("Token: \(token)")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.top, 8)
+                        .padding(.horizontal)
+                        .multilineTextAlignment(.center)
+                }
+                
                 if memberViewModel.isLoading && memberViewModel.members.isEmpty {
                     // Loading state
                     VStack(spacing: 20) {
@@ -84,9 +99,16 @@ struct MemberListScreen: View {
                     memberViewModel.fetchMembers()
                 }
             }
-            .navigationBarHidden(true)
             .navigationDestination(item: $selectedMember) { member in
                 MemberDetailsView(member: member)
+            }
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Logout") {
+                        KeychainHelper.shared.delete(forKey: "userToken")
+                        isLoggedIn = false
+                    }
+                }
             }
         }
     }
@@ -94,6 +116,6 @@ struct MemberListScreen: View {
 
 
 #Preview {
-    MemberListScreen()
+    MemberListScreen(isLoggedIn: .constant(true))
         .environmentObject(MemberViewModel())
 }

@@ -55,7 +55,8 @@ class LoginViewModel: ObservableObject {
             DispatchQueue.main.async {
                 self?.isLoading = false
                 switch result {
-                case .success(_):
+                case .success(let token):
+                    KeychainHelper.shared.save(token, forKey: "userToken")
                     completion(true)
                 case .failure(let error):
                     self?.errorMessage = error.localizedDescription

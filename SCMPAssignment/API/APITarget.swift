@@ -41,11 +41,11 @@ extension APITarget: TargetType {
         case .login(let request):
             return .requestCompositeData(
                 bodyData: try! JSONEncoder().encode(request),
-                urlParameters: ["delay": "0"]
+                urlParameters: ["delay": "5"]
             )
         case .fetchMember(let page):
             return .requestParameters(
-                parameters: ["page": page],
+                parameters: ["page": page, "delay": "5"],
                 encoding: URLEncoding.default
             )
         }
