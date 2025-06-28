@@ -11,11 +11,16 @@ import SwiftUI
 struct SCMPAssignmentApp: App {
     // Create a shared instance of MemberViewModel
     @StateObject private var memberViewModel = MemberViewModel()
+    @State private var isLoggedIn = false
     
     var body: some Scene {
         WindowGroup {
-            LoginView()
-                .environmentObject(memberViewModel)
+            if isLoggedIn {
+                MemberListScreen()
+                    .environmentObject(memberViewModel)
+            } else {
+                LoginView(isLoggedIn: $isLoggedIn)
+            }
         }
     }
 }
