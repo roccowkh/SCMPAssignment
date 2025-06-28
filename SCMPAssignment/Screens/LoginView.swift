@@ -11,6 +11,8 @@ struct LoginView: View {
     @State private var username: String = ""
     @State private var password: String = ""
     @State private var isPasswordVisible: Bool = false
+    @State private var isLoading: Bool = false
+    @State private var errorMessage: String?
     
     var body: some View {
         NavigationView {
@@ -38,8 +40,9 @@ struct LoginView: View {
                         
                         TextField("Enter your username", text: $username)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
-//                            .autocapitalization(.none)
-//                            .disableAutocorrection(true)
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .disabled(isLoading)
                     }
                     
                     // Password Field
@@ -52,9 +55,11 @@ struct LoginView: View {
                             if isPasswordVisible {
                                 TextField("Enter your password", text: $password)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .disabled(isLoading)
                             } else {
                                 SecureField("Enter your password", text: $password)
                                     .textFieldStyle(RoundedBorderTextFieldStyle())
+                                    .disabled(isLoading)
                             }
                             
                             Button(action: {
@@ -63,15 +68,26 @@ struct LoginView: View {
                                 Image(systemName: isPasswordVisible ? "eye.slash" : "eye")
                                     .foregroundColor(.secondary)
                             }
+                            .disabled(isLoading)
                         }
                     }
                 }
                 .padding(.horizontal, 30)
                 
+                // Error Message
+                if let errorMessage = errorMessage {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 30)
+                }
+                
                 // Login Button
                 Button(action: {
-                    // Handle login logic here
+                    isLoading = true
                     APIManager.shared.login(email: "eve.holt@reqres.in", password: "cityslicka") { result in
+                        isLoading = false
                         switch result {
                         case .success(let token):
                             print("Login successful! Token: \(token)")
@@ -82,21 +98,41 @@ struct LoginView: View {
                         }
                     }
                 }) {
-                    Text("Sign In")
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(Color.blue)
-                        .cornerRadius(10)
+                    HStack {
+                        if isLoading {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.8)
+                        }
+                        Text(isLoading ? "Signing In..." : "Sign In")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+                    .background(Color.blue)
+                    .cornerRadius(10)
                 }
                 .padding(.horizontal, 30)
-                .disabled(username.isEmpty || password.isEmpty)
-                .opacity(username.isEmpty || password.isEmpty ? 0.6 : 1.0)
+                .disabled(isLoading)
+                .opacity(isLoading ? 0.6 : 1.0)
                 
                 Spacer()
             }
-//            .navigationBarHidden(true)
+            .overlay(
+                Group {
+                    if isLoading {
+                        Color.black.opacity(0.3)
+                            .ignoresSafeArea()
+                            .overlay(
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    .scaleEffect(1.5)
+                            )
+                    }
+                }
+            )
+            .navigationBarHidden(true)
         }
     }
 }
