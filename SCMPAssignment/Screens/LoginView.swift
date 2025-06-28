@@ -38,8 +38,8 @@ struct LoginView: View {
                         
                         TextField("Enter your username", text: $username)
                             .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .autocapitalization(.none)
-                            .disableAutocorrection(true)
+//                            .autocapitalization(.none)
+//                            .disableAutocorrection(true)
                     }
                     
                     // Password Field
@@ -71,7 +71,16 @@ struct LoginView: View {
                 // Login Button
                 Button(action: {
                     // Handle login logic here
-                    print("Login attempted with username: \(username)")
+                    APIManager.shared.login(email: "eve.holt@reqres.in", password: "cityslicka") { result in
+                        switch result {
+                        case .success(let token):
+                            print("Login successful! Token: \(token)")
+                            // You can now save the token or update your app state
+                        case .failure(let error):
+                            print("Login failed: \(error.localizedDescription)")
+                            // Show error to user
+                        }
+                    }
                 }) {
                     Text("Sign In")
                         .font(.headline)
@@ -87,7 +96,7 @@ struct LoginView: View {
                 
                 Spacer()
             }
-            .navigationBarHidden(true)
+//            .navigationBarHidden(true)
         }
     }
 }
