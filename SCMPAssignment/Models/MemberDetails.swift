@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct MemberDetails: Codable, Identifiable {
+struct MemberDetails: Codable, Identifiable, Equatable, Hashable {
     let id: Int
     let email: String
     let firstName: String

@@ -17,42 +17,45 @@ class MemberViewModel: ObservableObject {
     @Published var totalPages: Int = 0
     @Published var totalMembers: Int = 0
     
-    private let baseURL = "https://reqres.in/api/users"
-    
     // MARK: - Public Methods
     
-    func fetchMembers(page: Int = 1) async {
+    func fetchMembers(page: Int = 1, completion: @escaping () -> Void = {}) {
         isLoading = true
         errorMessage = nil
         
-        do {
-            let url = URL(string: "\(baseURL)?page=\(page)")!
-            let (data, _) = try await URLSession.shared.data(from: url)
-            
-            let response = try JSONDecoder().decode(MemberDetailsResponse.self, from: data)
-            
-            await MainActor.run {
-                self.members = response.data
-                self.currentPage = response.page
-                self.totalPages = response.totalPages
-                self.totalMembers = response.total
-                self.isLoading = false
-            }
-        } catch {
-            await MainActor.run {
-                self.errorMessage = "Failed to fetch members: \(error.localizedDescription)"
-                self.isLoading = false
+        APIManager.shared.fetchMembers(page: page) { result in
+            DispatchQueue.main.async {
+                switch result {
+                case .success(let response):
+                    if page == 1 {
+                        self.members = response.data
+                    } else {
+                        // Append new members for subsequent pages
+                        let newMembers = response.data.filter { newMember in
+                            !self.members.contains(where: { $0.id == newMember.id })
+                        }
+                        self.members.append(contentsOf: newMembers)
+                    }
+                    self.currentPage = response.page
+                    self.totalPages = response.totalPages
+                    self.totalMembers = response.total
+                    self.isLoading = false
+                case .failure(let error):
+                    self.errorMessage = "Failed to fetch members: \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                completion()
             }
         }
     }
     
-    func loadNextPage() async {
+    func loadNextPage(completion: @escaping () -> Void = {}) {
         guard currentPage < totalPages else { return }
-        await fetchMembers(page: currentPage + 1)
+        fetchMembers(page: currentPage + 1, completion: completion)
     }
     
-    func refreshMembers() async {
-        await fetchMembers(page: 1)
+    func refreshMembers(completion: @escaping () -> Void = {}) {
+        fetchMembers(page: 1, completion: completion)
     }
     
     func getMember(by id: Int) -> MemberDetails? {
@@ -74,5 +77,15 @@ class MemberViewModel: ObservableObject {
     
     func clearError() {
         errorMessage = nil
+    }
+    
+    func loadMoreIfNeeded(currentMember: MemberDetails) {
+        guard let lastMember = members.last else { return }
+        if currentMember == lastMember &&
+            !isLoading &&
+            currentPage < totalPages {
+            print("Loading more members: page \(currentPage + 1)")
+            fetchMembers(page: currentPage + 1)
+        }
     }
 }

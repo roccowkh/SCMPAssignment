@@ -13,15 +13,24 @@ struct MemberRowView: View {
     var body: some View {
         HStack(spacing: 15) {
             // Avatar
-            Circle()
-                .fill(Color.blue.opacity(0.2))
-                .frame(width: 50, height: 50)
-                .overlay(
-                    Text(member.initials)
-                        .font(.headline)
-                        .fontWeight(.semibold)
+            AsyncImage(url: URL(string: member.avatar)) { phase in
+                if let image = phase.image {
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } else if phase.error != nil {
+                    // Error placeholder
+                    Image(systemName: "person.crop.circle.fill")
+                        .resizable()
+                        .scaledToFill()
                         .foregroundColor(.blue)
-                )
+                } else {
+                    // Loading placeholder
+                    ProgressView()
+                }
+            }
+            .frame(width: 50, height: 50)
+            .clipShape(Circle())
             
             // Member Info
             VStack(alignment: .leading, spacing: 4) {
@@ -41,6 +50,7 @@ struct MemberRowView: View {
                 .foregroundColor(.secondary)
                 .font(.caption)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 50)
+        .padding(.horizontal, 15)
     }
 } 
