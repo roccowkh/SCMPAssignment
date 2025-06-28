@@ -12,7 +12,7 @@ struct MemberDetailsView: View {
     @State private var selectedMember: MemberDetails?
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 20) {
                     if let member = selectedMember {

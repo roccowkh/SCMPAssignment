@@ -13,9 +13,10 @@ struct LoginView: View {
     @State private var isPasswordVisible: Bool = false
     @State private var isLoading: Bool = false
     @State private var errorMessage: String?
+    @State private var navigateToMemberList: Bool = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 30) {
                 // Header
                 VStack(spacing: 10) {
@@ -91,6 +92,7 @@ struct LoginView: View {
                         switch result {
                         case .success(let token):
                             print("Login successful! Token: \(token)")
+                            navigateToMemberList = true
                             // You can now save the token or update your app state
                         case .failure(let error):
                             print("Login failed: \(error.localizedDescription)")
@@ -133,6 +135,9 @@ struct LoginView: View {
                 }
             )
             .navigationBarHidden(true)
+            .navigationDestination(isPresented: $navigateToMemberList) {
+                MemberListScreen()
+            }
         }
     }
 }
