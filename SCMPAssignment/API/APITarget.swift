@@ -10,6 +10,7 @@ import Foundation
 
 enum APITarget {
     case login(request: LoginRequest)
+    case fetchMember(page: Int)
 }
 
 extension APITarget: TargetType {
@@ -21,6 +22,8 @@ extension APITarget: TargetType {
         switch self {
         case .login:
             return "/login"
+        case .fetchMember:
+            return "/users"
         }
     }
     
@@ -28,6 +31,8 @@ extension APITarget: TargetType {
         switch self {
         case .login:
             return .post
+        case .fetchMember:
+            return .get
         }
     }
     
@@ -36,7 +41,12 @@ extension APITarget: TargetType {
         case .login(let request):
             return .requestCompositeData(
                 bodyData: try! JSONEncoder().encode(request),
-                urlParameters: ["delay": "5"]
+                urlParameters: ["delay": "0"]
+            )
+        case .fetchMember(let page):
+            return .requestParameters(
+                parameters: ["page": page],
+                encoding: URLEncoding.default
             )
         }
     }
@@ -50,6 +60,24 @@ extension APITarget: TargetType {
         case .login:
             return """
             { "token": "QpwL5tke4Pnpja7X4" }
+            """.data(using: .utf8)!
+        case .fetchMember:
+            return """
+            {
+                "page": 1,
+                "per_page": 6,
+                "total": 12,
+                "total_pages": 2,
+                "data": [
+                    {
+                        "id": 1,
+                        "email": "george.bluth@reqres.in",
+                        "first_name": "George",
+                        "last_name": "Bluth",
+                        "avatar": "https://reqres.in/img/faces/1-image.jpg"
+                    }
+                ]
+            }
             """.data(using: .utf8)!
         }
     }

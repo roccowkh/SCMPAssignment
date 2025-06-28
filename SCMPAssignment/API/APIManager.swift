@@ -20,7 +20,6 @@ final class APIManager {
         let error: String?
     }
     
-    
     func login(email: String, password: String, completion: @escaping (Result<String, Error>) -> Void) {
         let loginRequest = LoginRequest(email: email, password: password)
         provider.request(.login(request: loginRequest)) { result in
@@ -35,6 +34,22 @@ final class APIManager {
                     } else {
                         completion(.failure(NSError(domain: "APIManager", code: response.statusCode, userInfo: [NSLocalizedDescriptionKey: "Unknown error"])))
                     }
+                } catch {
+                    completion(.failure(error))
+                }
+            case .failure(let error):
+                completion(.failure(error))
+            }
+        }
+    }
+    
+    func fetchMembers(page: Int = 1, completion: @escaping (Result<MemberDetailsResponse, Error>) -> Void) {
+        provider.request(.fetchMember(page: page)) { result in
+            switch result {
+            case .success(let response):
+                do {
+                    let memberResponse = try JSONDecoder().decode(MemberDetailsResponse.self, from: response.data)
+                    completion(.success(memberResponse))
                 } catch {
                     completion(.failure(error))
                 }
