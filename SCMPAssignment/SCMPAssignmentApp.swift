@@ -14,13 +14,8 @@ struct SCMPAssignmentApp: App {
     
     var body: some Scene {
         WindowGroup {
-            if memberViewModel.members.count > 0 {
-                MemberDetailsView()
-                    .environmentObject(memberViewModel)
-            } else {
-                LoginView()
-                    .environmentObject(memberViewModel)
-            }
+            LoginView()
+                .environmentObject(memberViewModel)
         }
     }
 }
