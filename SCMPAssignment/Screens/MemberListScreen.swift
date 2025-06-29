@@ -80,7 +80,7 @@ struct MemberListScreen: View {
                                 selectedMember = member
                             } label: {
                                 VStack(spacing: 0) {
-                                    MemberRowView(member: member)
+                                    MemberRowView(member: member, refreshID: memberViewModel.refreshID)
                                     Divider()
                                 }
                             }
@@ -114,12 +114,13 @@ struct MemberListScreen: View {
                     }
                     // If network is available, fetch from API
                     if networkMonitor.isConnected {
+                        print("network is back, calling fetch")
                         memberViewModel.fetchMembers()
                     }
                     hasFetched = true
                 }
             }
-            .onChange(of: networkMonitor.isConnected) { isConnected in
+            .onChange(of: networkMonitor.isConnected) { _, isConnected in
                 print("Network status changed: \(isConnected ? "Online" : "Offline")")
                 if isConnected {
                     // Reset the flag when NWPathMonitor reports online
@@ -128,6 +129,26 @@ struct MemberListScreen: View {
                     memberViewModel.fetchMembers()
                 }
             }
+            .overlay(
+                // Progress overlay for pull-to-refresh
+                Group {
+                    if memberViewModel.isRefreshing {
+                        VStack {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle())
+                                .scaleEffect(1.2)
+                            Text("Refreshing...")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .padding(.top, 8)
+                        }
+                        .padding()
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(radius: 4)
+                    }
+                }
+            )
             .navigationDestination(item: $selectedMember) { member in
                 MemberDetailsView(member: member)
             }
