@@ -23,7 +23,7 @@ class MemberViewModel: ObservableObject {
     @Published var currentPage: Int = 1
     @Published var totalPages: Int = 0
     @Published var totalMembers: Int = 0
-    @Published var isActuallyOnline: Bool = true
+    @Published var isActuallyOnline: Bool = false
     
     
     func fetchMembers(page: Int = 1, completion: @escaping () -> Void = {}) {
@@ -38,6 +38,7 @@ class MemberViewModel: ObservableObject {
                     self.isActuallyOnline = true
                     
                     if page == 1 {
+                        self.members = []
                         self.members = response.data
                         print("Updated members (replace): \(self.members.count)")
                     } else {

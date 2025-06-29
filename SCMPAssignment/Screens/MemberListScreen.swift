@@ -31,7 +31,7 @@ struct MemberListScreen: View {
                         .multilineTextAlignment(.center)
                 }
                 // Show offline banner if not connected
-                if !networkMonitor.isConnected {
+                if !networkMonitor.isConnected && !memberViewModel.isActuallyOnline {
                     Text("You are offline. Showing cached data.")
                         .font(.caption)
                         .foregroundColor(.white)
@@ -122,6 +122,8 @@ struct MemberListScreen: View {
             .onChange(of: networkMonitor.isConnected) { isConnected in
                 print("Network status changed: \(isConnected ? "Online" : "Offline")")
                 if isConnected {
+                    // Reset the flag when NWPathMonitor reports online
+                    memberViewModel.isActuallyOnline = true
                     memberViewModel.members = []
                     memberViewModel.fetchMembers()
                 }
