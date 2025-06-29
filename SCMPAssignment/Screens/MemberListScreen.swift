@@ -11,6 +11,8 @@ struct MemberListScreen: View {
     @EnvironmentObject var memberViewModel: MemberViewModel
     @State private var selectedMember: MemberDetails?
     @Binding var isLoggedIn: Bool
+    @ObservedObject private var networkMonitor = NetworkMonitor.shared
+    @State private var hasFetched: Bool = false
     
     var token: String? {
         KeychainHelper.shared.read(forKey: "userToken")
@@ -18,7 +20,7 @@ struct MemberListScreen: View {
     
     var body: some View {
         NavigationStack {
-            VStack {
+            VStack(spacing: 0) {
                 // Show token at the top
                 if let token = token {
                     Text("Token: \(token)")
@@ -27,6 +29,15 @@ struct MemberListScreen: View {
                         .padding(.top, 8)
                         .padding(.horizontal)
                         .multilineTextAlignment(.center)
+                }
+                // Show offline banner if not connected
+                if !networkMonitor.isConnected {
+                    Text("You are offline. Showing cached data.")
+                        .font(.caption)
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.orange)
                 }
                 
                 if memberViewModel.isLoading && memberViewModel.members.isEmpty {
@@ -40,7 +51,7 @@ struct MemberListScreen: View {
                             .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if let errorMessage = memberViewModel.errorMessage {
+                } else if let errorMessage = memberViewModel.errorMessage, memberViewModel.members.isEmpty {
                     // Error state
                     VStack(spacing: 20) {
                         Image(systemName: "exclamationmark.triangle")
@@ -95,7 +106,23 @@ struct MemberListScreen: View {
                 }
             }
             .onAppear {
-                if memberViewModel.members.isEmpty {
+                if !hasFetched {
+                    // Always try to load from cache first
+                    if let cached = UserDefaultsHelper.shared.getMemberList(), !cached.isEmpty {
+                        print("Loading from cache")
+                        memberViewModel.members = cached
+                    }
+                    // If network is available, fetch from API
+                    if networkMonitor.isConnected {
+                        memberViewModel.fetchMembers()
+                    }
+                    hasFetched = true
+                }
+            }
+            .onChange(of: networkMonitor.isConnected) { isConnected in
+                print("Network status changed: \(isConnected ? "Online" : "Offline")")
+                if isConnected {
+                    memberViewModel.members = []
                     memberViewModel.fetchMembers()
                 }
             }
@@ -106,6 +133,7 @@ struct MemberListScreen: View {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Logout") {
                         KeychainHelper.shared.delete(forKey: "userToken")
+                        UserDefaultsHelper.shared.clearMemberList()
                         isLoggedIn = false
                     }
                 }

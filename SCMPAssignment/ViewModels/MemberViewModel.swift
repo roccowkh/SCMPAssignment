@@ -7,17 +7,24 @@
 
 import Foundation
 import SwiftUI
+import Network
 
 @MainActor
 class MemberViewModel: ObservableObject {
-    @Published var members: [MemberDetails] = []
+    @Published var members: [MemberDetails] = [] {
+        didSet {
+            if !members.isEmpty {
+                UserDefaultsHelper.shared.saveMemberList(members)
+            }
+        }
+    }
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
     @Published var currentPage: Int = 1
     @Published var totalPages: Int = 0
     @Published var totalMembers: Int = 0
+    @Published var isActuallyOnline: Bool = true
     
-    // MARK: - Public Methods
     
     func fetchMembers(page: Int = 1, completion: @escaping () -> Void = {}) {
         isLoading = true
@@ -27,20 +34,34 @@ class MemberViewModel: ObservableObject {
             DispatchQueue.main.async {
                 switch result {
                 case .success(let response):
+                    // API call succeeded, so we're actually online
+                    self.isActuallyOnline = true
+                    
                     if page == 1 {
                         self.members = response.data
+                        print("Updated members (replace): \(self.members.count)")
                     } else {
-                        // Append new members for subsequent pages
                         let newMembers = response.data.filter { newMember in
                             !self.members.contains(where: { $0.id == newMember.id })
                         }
                         self.members.append(contentsOf: newMembers)
+                        print("Updated members (append): \(self.members.count)")
                     }
                     self.currentPage = response.page
                     self.totalPages = response.totalPages
                     self.totalMembers = response.total
                     self.isLoading = false
                 case .failure(let error):
+                    // Check if it's a network error to determine if we're actually offline
+                    if let networkError = error as? URLError {
+                        switch networkError.code {
+                        case .notConnectedToInternet, .networkConnectionLost, .cannotConnectToHost:
+                            self.isActuallyOnline = false
+                        default:
+                            // Other errors (like server errors) don't necessarily mean we're offline
+                            break
+                        }
+                    }
                     self.errorMessage = "Failed to fetch members: \(error.localizedDescription)"
                     self.isLoading = false
                 }
