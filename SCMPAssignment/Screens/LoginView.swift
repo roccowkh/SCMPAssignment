@@ -11,6 +11,7 @@ struct LoginView: View {
     @StateObject private var viewModel = LoginViewModel()
     @Binding var isLoggedIn: Bool
     @State private var isErrorSnackBarVisible: Bool = false
+    @EnvironmentObject private var memberViewModel: MemberViewModel
     
     var body: some View {
         NavigationStack {
@@ -88,6 +89,7 @@ struct LoginView: View {
                     Button(action: {
                         viewModel.login { success in
                             if success {
+                                memberViewModel.initialFetchIfNeeded()
                                 isLoggedIn = true
                             } else if viewModel.errorMessage != nil {
                                 isErrorSnackBarVisible = true

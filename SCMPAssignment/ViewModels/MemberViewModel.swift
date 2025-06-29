@@ -8,6 +8,7 @@
 import Foundation
 import SwiftUI
 import Network
+import Combine
 
 @MainActor
 class MemberViewModel: ObservableObject {
@@ -27,6 +28,38 @@ class MemberViewModel: ObservableObject {
     @Published var totalMembers: Int = 0
     @Published var isActuallyOnline: Bool = false
     
+    private var hasFetched: Bool = false
+    
+    func initialFetchIfNeeded() {
+        guard !hasFetched else { return }
+        if NetworkMonitor.shared.didReceiveFirstStatus {
+            if let cached = UserDefaultsHelper.shared.getMemberList(), !cached.isEmpty {
+                print("Loading from cache (initialFetchIfNeeded)")
+                self.members = cached
+            }
+            if NetworkMonitor.shared.isConnected {
+                self.fetchMembers()
+            }
+            hasFetched = true
+        } else {
+            // Wait for network status, then fetch
+            let cancellable = NetworkMonitor.shared.$didReceiveFirstStatus
+                .filter { $0 }
+                .first()
+                .sink { [weak self] _ in
+                    guard let self = self else { return }
+                    if let cached = UserDefaultsHelper.shared.getMemberList(), !cached.isEmpty {
+                        print("Loading from cache (initialFetchIfNeeded, delayed)")
+                        self.members = cached
+                    }
+                    if NetworkMonitor.shared.isConnected {
+                        self.fetchMembers()
+                    }
+                    self.hasFetched = true
+                }
+            // Store cancellable if you want to keep it alive, or ignore if only needed once
+        }
+    }
     
     func fetchMembers(page: Int = 1, completion: @escaping () -> Void = {}) {
         isLoading = true

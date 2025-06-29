@@ -153,31 +153,6 @@ struct MemberListScreen: View {
                 }
             }
         }
-        .onAppear {
-            didInitialAppear = true
-            if !hasFetched && networkMonitor.didReceiveFirstStatus {
-                if let cached = UserDefaultsHelper.shared.getMemberList(), !cached.isEmpty {
-                    print("Loading from cache")
-                    memberViewModel.members = cached
-                }
-                if networkMonitor.isConnected {
-                    memberViewModel.fetchMembers()
-                }
-                hasFetched = true
-            }
-        }
-        .onChange(of: networkMonitor.didReceiveFirstStatus) { _, didReceive in
-            if didReceive && didInitialAppear && !hasFetched {
-                if let cached = UserDefaultsHelper.shared.getMemberList(), !cached.isEmpty {
-                    print("Loading from cache (onChange)")
-                    memberViewModel.members = cached
-                }
-                if networkMonitor.isConnected {
-                    memberViewModel.fetchMembers()
-                }
-                hasFetched = true
-            }
-        }
     }
 }
 
