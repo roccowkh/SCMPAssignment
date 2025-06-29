@@ -7,6 +7,7 @@ Feature
 5. save token to keychain for login session
 6. save member list to user default for showing in offline mode
 7. logout to clear the token
+8. Error message if member list cannot be found (will only be shown if cache is empty and list cannot be fetched)
 
 
 
