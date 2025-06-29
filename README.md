@@ -13,3 +13,4 @@ Feature
 
 P.S 
 For some reason I did't test the app with a real device, all are based on what I see on simulator
+I added a few seconds delay in the user list fetching so that the loading spinner can be seen at the bottom
